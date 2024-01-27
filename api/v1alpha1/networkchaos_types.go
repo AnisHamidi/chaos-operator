@@ -25,11 +25,47 @@ import (
 
 // NetworkChaosSpec defines the desired state of NetworkChaos
 type NetworkChaosSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of NetworkChaos. Edit networkchaos_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// +kubebuilder:validation:Required
+	Upstream Upstream `json:"upstream"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=true
+	Enabled bool `json:"enabled"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=downstream
+	Stream string `json:"stream"`
+
+	// +kubebuilder:validation:Required
+	LatencyToxic Toxic `json:"latencyToxic"`
+}
+
+// Upstream defines the upstream service details
+type Upstream struct {
+
+	// +kubebuilder:validation:Required
+	Name string `json:"name"`
+
+	// +kubebuilder:validation:Required
+	Port string `json:"port"`
+}
+
+// Toxic defines the common structure of a toxic
+type Toxic struct {
+
+	// +kubebuilder:validation:Required
+	Latency int `json:"latency"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:Maximum=1.0
+	// +kubebuilder:validation:Minimum=0.0
+	// +kubebuilder:default=1.0
+	Probability float32 `json:"probability"`
+
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:default=0
+	Jitter int `json:"jitter"`
 }
 
 // NetworkChaosStatus defines the observed state of NetworkChaos
