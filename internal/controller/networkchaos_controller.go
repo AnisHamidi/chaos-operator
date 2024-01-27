@@ -211,7 +211,7 @@ func (r *NetworkChaosReconciler) manageToxiproxyProxies(ctx context.Context, req
 	// TODO
 	// it should be change to name of toxiporxy service -> "toxiproxy-"+chaosName:toxiproxyPort
 	//toxiproxyClient := toxiproxy.NewClient("localhost:8474")
-	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + req.Namespace + "svc.cluster.local:8474")
+	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + req.Namespace + "-svc.cluster.local:8474")
 
 	// Attempt to retrieve an existing proxy
 	proxy, err := r.getOrCreateProxy(ctx, req, toxiproxyClient, networkChaos)
