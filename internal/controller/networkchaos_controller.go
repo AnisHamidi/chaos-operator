@@ -52,6 +52,9 @@ const (
 //+kubebuilder:rbac:groups=chaos.snappcloud.io,resources=networkchaos,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=chaos.snappcloud.io,resources=networkchaos/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=chaos.snappcloud.io,resources=networkchaos/finalizers,verbs=update
+//+kubebuilder:rbac:groups=chaos.snappcloud.io,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=chaos.snappcloud.io,resources=deployments/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=chaos.snappcloud.io,resources=deployments/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
