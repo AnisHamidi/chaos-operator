@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	toxiproxy "github.com/Shopify/toxiproxy/client"
+	"github.com/go-logr/logr"
 	"github.com/pingcap/errors"
 	chaosv1alpha1 "github.com/snapp-incubator/toxiproxy-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -46,7 +47,8 @@ type NetworkChaosReconciler struct {
 const (
 	toxiproxyImage  = "ghcr.io/shopify/toxiproxy" // The Docker image for Toxiproxy
 	toxiproxyPort   = 8474                        // Default port for Toxiproxy
-	portFormatIndex = 5                           // Index for extracting port in format "[::]:port"
+	portFormatIndex = 5
+	chaosFinalizer  = "chaos.snappcloud.io/cleanup-chaos"
 )
 
 //+kubebuilder:rbac:groups=chaos.snappcloud.io,resources=networkchaos,verbs=get;list;watch;create;update;patch;delete
@@ -79,6 +81,35 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		log.Error(err, "Failed to get NetworkChaos", req.NamespacedName)
 		return ctrl.Result{}, err
 	}
+	// Check if the MyCRD instance is marked to be deleted
+	if networkChaos.GetDeletionTimestamp() != nil {
+		if contains(networkChaos.GetFinalizers(), chaosFinalizer) {
+			// Run finalization logic for myFinalizerName
+			// If the finalization logic fails, don't remove the finalizer so
+			// that we can retry during the next reconciliation
+			//if err := r.finalizeMyCRD(log, networkChaos); err != nil {
+			//	return ctrl.Result{}, err
+			//}
+
+			// Remove Finalizer
+			networkChaos.SetFinalizers(remove(networkChaos.GetFinalizers(), chaosFinalizer))
+			err := r.Update(ctx, networkChaos)
+			if err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, nil
+	}
+
+	// Add finalizer for this CR
+	if !contains(networkChaos.GetFinalizers(), chaosFinalizer) {
+		if err := r.addFinalizer(log, networkChaos); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
+
+	// other reconcile logic here
 
 	// Ensure toxiproxy Deployment is created
 	if err := r.ensureToxiproxyDeployment(ctx, req, networkChaos); err != nil {
@@ -314,4 +345,42 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 		log.Info("toxic(name) already exists")
 	}
 	return nil
+}
+
+func (r *NetworkChaosReconciler) finalizeMyCRD(reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
+	// Your finalizer logic here
+	reqLogger.Info("Successfully finalized MyCRD")
+	return nil
+}
+
+func (r *NetworkChaosReconciler) addFinalizer(reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
+	reqLogger.Info("Adding Finalizer for the MyCRD")
+	m.SetFinalizers(append(m.GetFinalizers(), chaosFinalizer))
+
+	// Update CR
+	err := r.Update(context.Background(), m)
+	if err != nil {
+		reqLogger.Error(err, "Failed to update MyCRD with finalizer")
+		return err
+	}
+	return nil
+}
+
+func contains(list []string, s string) bool {
+	for _, v := range list {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
+func remove(list []string, s string) []string {
+	newList := []string{}
+	for _, v := range list {
+		if v != s {
+			newList = append(newList, v)
+		}
+	}
+	return newList
 }
