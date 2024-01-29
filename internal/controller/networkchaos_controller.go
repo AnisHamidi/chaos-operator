@@ -87,7 +87,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			// Run finalization logic for myFinalizerName
 			// If the finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation
-			if err := r.finalizeMyCRD(req, networkChaos); err != nil {
+			if err := r.finalizeNetworkChaos(req, log, networkChaos); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -347,7 +347,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	return nil
 }
 
-func (r *NetworkChaosReconciler) finalizeMyCRD(req ctrl.Request, reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
+func (r *NetworkChaosReconciler) finalizeNetworkChaos(req ctrl.Request, reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
 	// Initialize Toxiproxy client
 	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + m.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
 
