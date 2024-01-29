@@ -22,7 +22,6 @@ import (
 	"strings"
 
 	toxiproxy "github.com/Shopify/toxiproxy/client"
-	"github.com/go-logr/logr"
 	"github.com/pingcap/errors"
 	chaosv1alpha1 "github.com/snapp-incubator/toxiproxy-operator/api/v1alpha1"
 	appsv1 "k8s.io/api/apps/v1"
@@ -86,40 +85,17 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 	// Check if the networkChaos instance is marked to be deleted
 	if networkChaos.GetDeletionTimestamp() != nil {
-		if contains(networkChaos.GetFinalizers(), chaosFinalizer) {
-			// Run finalization logic for myFinalizerName
-			// If the finalization logic fails, don't remove the finalizer so
-			// that we can retry during the next reconciliation
-			if err := r.finalizeNetworkChaos(ctx, req, log, networkChaos); err != nil {
-				return ctrl.Result{}, err
-			}
-
-			// Remove Finalizer
-			log.Info("im in Remove Finalizer")
-			networkChaos.SetFinalizers(remove(networkChaos.GetFinalizers(), chaosFinalizer))
-			err := r.Update(ctx, networkChaos)
-			if err != nil {
-				return ctrl.Result{}, err
-			}
-		}
-		log.Info("im in Stop reconciliation as the item is being deleted")
-
-		// Stop reconciliation as the item is being deleted
-		//	return ctrl.Result{}, nil
-	}
-
-	log.Info("im before Add finalizer for this CR ")
-
-	// Add finalizer for this CR
-	if !contains(networkChaos.GetFinalizers(), chaosFinalizer) {
-		if err := r.addFinalizer(log, networkChaos); err != nil {
+		if err := r.checkNetworkChaosInstanceMarkedDeleted(ctx, req, networkChaos); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
 
-	// other reconcile logic here
-
-	log.Info("im before Ensure toxiproxy Deployment is created")
+	// Add finalizer for this CR
+	if !contains(networkChaos.GetFinalizers(), chaosFinalizer) {
+		if err := r.addFinalizer(ctx, networkChaos); err != nil {
+			return ctrl.Result{}, err
+		}
+	}
 
 	// Ensure toxiproxy Deployment is created
 	if err := r.ensureToxiproxyDeployment(ctx, req, networkChaos); err != nil {
@@ -144,6 +120,27 @@ func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&chaosv1alpha1.NetworkChaos{}).
 		Complete(r)
+}
+
+func (r *NetworkChaosReconciler) checkNetworkChaosInstanceMarkedDeleted(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
+
+	if contains(networkChaos.GetFinalizers(), chaosFinalizer) {
+		// If the finalization logic fails, don't remove the finalizer so
+		// that we can retry during the next reconciliation
+		if err := r.finalizeNetworkChaos(ctx, req, networkChaos); err != nil {
+			return err
+		}
+
+		// Remove Finalizer
+		networkChaos.SetFinalizers(remove(networkChaos.GetFinalizers(), chaosFinalizer))
+		err := r.Update(ctx, networkChaos)
+		if err != nil {
+			return err
+		}
+	}
+	// Stop reconciliation as the item is being deleted
+	return nil
+
 }
 
 func (r *NetworkChaosReconciler) ensureToxiproxyDeployment(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
@@ -228,8 +225,7 @@ func (r *NetworkChaosReconciler) createToxiproxyDeployment(ns string, name strin
 func (r *NetworkChaosReconciler) createToxiproxyService(ns string, name string, selector string, port int, targetPort int) *corev1.Service {
 	svc := &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-			//	Name:      "toxiproxy-" + ns,
+			Name:      name,
 			Namespace: ns,
 		},
 		Spec: corev1.ServiceSpec{
@@ -249,9 +245,6 @@ func (r *NetworkChaosReconciler) createToxiproxyService(ns string, name string, 
 func (r *NetworkChaosReconciler) manageToxiproxyProxies(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
 
 	// Create a new Toxiproxy client
-	// TODO
-	// it should be change to name of toxiporxy service -> "toxiproxy-"+chaosName:toxiproxyPort
-	//toxiproxyClient := toxiproxy.NewClient("localhost:8474")
 	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
 
 	// Attempt to retrieve an existing proxy
@@ -357,58 +350,60 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	return nil
 }
 
-func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req ctrl.Request, reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
+func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
+	log := log.FromContext(ctx)
+
 	// Initialize Toxiproxy client
-	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + m.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
+	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
 
 	// Determine the proxy name related to the CRD instance
 	// This depends on how you associate your CRD instances with Toxiproxy proxies
 	// For example, it could be something like this:
-	proxyName := m.GetName()
+	proxyName := networkChaos.GetName()
 
 	// Delete the proxy
 	proxy, err := toxiproxyClient.Proxy(proxyName)
 	if err != nil {
-		reqLogger.Error(err, "Failed to get proxy")
+		log.Error(err, "Failed to get proxy")
 		return err
 
 	}
 	err = proxy.Delete()
 	if err != nil {
-		reqLogger.Error(err, "Failed to delete Toxiproxy proxy")
+		log.Error(err, "Failed to delete Toxiproxy proxy")
 		return err
 	}
 	// Delete the svc
 
-	svcName := "toxiproxy-" + m.GetName() + "-" + m.Spec.Upstream.Name
+	svcName := "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name
 	svc := &corev1.Service{}
 
 	// Try to get the Service if it exists
 	err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
 	if err != nil {
-		reqLogger.Error(err, "Failed to get proxy svc")
+		log.Error(err, "Failed to get proxy svc")
 		return err
 
 	}
 	// Delete the service
 	if err := r.Client.Delete(ctx, svc); err != nil {
-		reqLogger.Error(err, "Failed to delete proxy svc")
+		log.Error(err, "Failed to delete proxy svc")
 		return err
 	}
-
-	reqLogger.Info("Successfully finalized and deleted Toxiproxy proxy")
+	log.Info("Successfully finalized and deleted Toxiproxy proxy")
 	return nil
 
 }
+func (r *NetworkChaosReconciler) addFinalizer(ctx context.Context, networkChaos *chaosv1alpha1.NetworkChaos) error {
+	log := log.FromContext(ctx)
 
-func (r *NetworkChaosReconciler) addFinalizer(reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
-	reqLogger.Info("Adding Finalizer for the MyCRD")
-	m.SetFinalizers(append(m.GetFinalizers(), chaosFinalizer))
+	log.Info("Adding Finalizer for the NetworkChaos")
+	networkChaos.SetFinalizers(append(networkChaos.GetFinalizers(), chaosFinalizer))
 
 	// Update CR
-	err := r.Update(context.Background(), m)
+	err := r.Update(context.Background(), networkChaos)
 	if err != nil {
-		reqLogger.Error(err, "Failed to update MyCRD with finalizer")
+		log.Error(err, "Failed to update NetworkChaos with finalizer")
 		return err
 	}
 	return nil
