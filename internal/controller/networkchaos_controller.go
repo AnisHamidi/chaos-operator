@@ -108,6 +108,8 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		return ctrl.Result{}, nil
 	}
 
+	log.Info("im before Add finalizer for this CR ")
+
 	// Add finalizer for this CR
 	if !contains(networkChaos.GetFinalizers(), chaosFinalizer) {
 		if err := r.addFinalizer(log, networkChaos); err != nil {
@@ -116,6 +118,8 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 
 	// other reconcile logic here
+
+	log.Info("im before Ensure toxiproxy Deployment is created")
 
 	// Ensure toxiproxy Deployment is created
 	if err := r.ensureToxiproxyDeployment(ctx, req, networkChaos); err != nil {
