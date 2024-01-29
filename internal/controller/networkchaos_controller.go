@@ -84,7 +84,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		log.Error(err, "Failed to get NetworkChaos", req.NamespacedName)
 		return ctrl.Result{}, err
 	}
-	// Check if the MyCRD instance is marked to be deleted
+	// Check if the networkChaos instance is marked to be deleted
 	if networkChaos.GetDeletionTimestamp() != nil {
 		if contains(networkChaos.GetFinalizers(), chaosFinalizer) {
 			// Run finalization logic for myFinalizerName
@@ -105,7 +105,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		log.Info("im in Stop reconciliation as the item is being deleted")
 
 		// Stop reconciliation as the item is being deleted
-		return ctrl.Result{}, nil
+		//	return ctrl.Result{}, nil
 	}
 
 	log.Info("im before Add finalizer for this CR ")
