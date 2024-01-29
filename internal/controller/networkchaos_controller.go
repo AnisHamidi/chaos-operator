@@ -87,9 +87,9 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			// Run finalization logic for myFinalizerName
 			// If the finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation
-			//if err := r.finalizeMyCRD(log, networkChaos); err != nil {
-			//	return ctrl.Result{}, err
-			//}
+			if err := r.finalizeMyCRD(log, networkChaos); err != nil {
+				return ctrl.Result{}, err
+			}
 
 			// Remove Finalizer
 			networkChaos.SetFinalizers(remove(networkChaos.GetFinalizers(), chaosFinalizer))
