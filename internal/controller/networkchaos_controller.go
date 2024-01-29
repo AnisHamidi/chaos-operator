@@ -87,7 +87,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			// Run finalization logic for myFinalizerName
 			// If the finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation
-			if err := r.finalizeMyCRD(log, networkChaos); err != nil {
+			if err := r.finalizeMyCRD(req, networkChaos); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -347,10 +347,31 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	return nil
 }
 
-func (r *NetworkChaosReconciler) finalizeMyCRD(reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
-	// Your finalizer logic here
-	reqLogger.Info("Successfully finalized MyCRD")
+func (r *NetworkChaosReconciler) finalizeMyCRD(req ctrl.Request, reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
+	// Initialize Toxiproxy client
+	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + m.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
+
+	// Determine the proxy name related to the CRD instance
+	// This depends on how you associate your CRD instances with Toxiproxy proxies
+	// For example, it could be something like this:
+	proxyName := m.GetName()
+
+	// Delete the proxy
+	proxy, err := toxiproxyClient.Proxy(proxyName)
+	if err != nil {
+		reqLogger.Error(err, "Failed to get proxy", "ProxyName", proxyName)
+		return err
+
+	}
+	err = proxy.Delete()
+	if err != nil {
+		reqLogger.Error(err, "Failed to delete Toxiproxy proxy", "ProxyName", proxyName)
+		return err
+	}
+
+	reqLogger.Info("Successfully finalized and deleted Toxiproxy proxy", "ProxyName", proxyName)
 	return nil
+
 }
 
 func (r *NetworkChaosReconciler) addFinalizer(reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
