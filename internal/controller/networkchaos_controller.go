@@ -87,7 +87,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			// Run finalization logic for myFinalizerName
 			// If the finalization logic fails, don't remove the finalizer so
 			// that we can retry during the next reconciliation
-			if err := r.finalizeNetworkChaos(req, log, networkChaos); err != nil {
+			if err := r.finalizeNetworkChaos(ctx, req, log, networkChaos); err != nil {
 				return ctrl.Result{}, err
 			}
 
@@ -347,7 +347,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	return nil
 }
 
-func (r *NetworkChaosReconciler) finalizeNetworkChaos(req ctrl.Request, reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
+func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req ctrl.Request, reqLogger logr.Logger, m *chaosv1alpha1.NetworkChaos) error {
 	// Initialize Toxiproxy client
 	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + m.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
 
@@ -359,17 +359,34 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(req ctrl.Request, reqLogge
 	// Delete the proxy
 	proxy, err := toxiproxyClient.Proxy(proxyName)
 	if err != nil {
-		reqLogger.Error(err, "Failed to get proxy", "ProxyName", proxyName)
+		reqLogger.Error(err, "Failed to get proxy"+proxyName)
 		return err
 
 	}
 	err = proxy.Delete()
 	if err != nil {
-		reqLogger.Error(err, "Failed to delete Toxiproxy proxy", "ProxyName", proxyName)
+		reqLogger.Error(err, "Failed to delete Toxiproxy proxy"+proxyName)
+		return err
+	}
+	// Delete the svc
+
+	svcName := "toxiproxy-" + m.GetName() + "-" + m.Spec.Upstream.Name
+	svc := &corev1.Service{}
+
+	// Try to get the Service if it exists
+	err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
+	if err != nil {
+		reqLogger.Error(err, "Failed to get proxy svc"+svcName)
+		return err
+
+	}
+	// Delete the service
+	if err := r.Client.Delete(ctx, svc); err != nil {
+		reqLogger.Error(err, "Failed to delete proxy svc"+svcName)
 		return err
 	}
 
-	reqLogger.Info("Successfully finalized and deleted Toxiproxy proxy", "ProxyName", proxyName)
+	reqLogger.Info("Successfully finalized and deleted Toxiproxy proxy" + proxyName)
 	return nil
 
 }
