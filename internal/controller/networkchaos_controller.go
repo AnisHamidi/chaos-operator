@@ -359,13 +359,13 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req c
 	// Delete the proxy
 	proxy, err := toxiproxyClient.Proxy(proxyName)
 	if err != nil {
-		reqLogger.Error(err, "Failed to get proxy"+proxyName)
+		reqLogger.Error(err, "Failed to get proxy")
 		return err
 
 	}
 	err = proxy.Delete()
 	if err != nil {
-		reqLogger.Error(err, "Failed to delete Toxiproxy proxy"+proxyName)
+		reqLogger.Error(err, "Failed to delete Toxiproxy proxy")
 		return err
 	}
 	// Delete the svc
@@ -376,17 +376,17 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req c
 	// Try to get the Service if it exists
 	err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
 	if err != nil {
-		reqLogger.Error(err, "Failed to get proxy svc"+svcName)
+		reqLogger.Error(err, "Failed to get proxy svc")
 		return err
 
 	}
 	// Delete the service
 	if err := r.Client.Delete(ctx, svc); err != nil {
-		reqLogger.Error(err, "Failed to delete proxy svc"+svcName)
+		reqLogger.Error(err, "Failed to delete proxy svc")
 		return err
 	}
 
-	reqLogger.Info("Successfully finalized and deleted Toxiproxy proxy" + proxyName)
+	reqLogger.Info("Successfully finalized and deleted Toxiproxy proxy")
 	return nil
 
 }
