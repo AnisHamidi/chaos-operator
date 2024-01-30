@@ -24,7 +24,9 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // NetworkChaosSpec defines the desired state of NetworkChaos
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type NetworkChaosSpec struct {
+	metav1.TypeMeta `json:",inline"`
 
 	// +kubebuilder:validation:Required
 	Upstream Upstream `json:"upstream"`
