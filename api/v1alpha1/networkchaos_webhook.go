@@ -63,19 +63,19 @@ func (r *NetworkChaos) ValidateCreate() (admission.Warnings, error) {
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *NetworkChaos) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	networkchaoslog.Info("validate update", "name", r.Name)
-	fmt.Printf("Type of old object: %T\n", old)
-	oldNetworkChaosSpec, ok := old.(*NetworkChaosSpec)
-	fmt.Printf("Type of oldNetworkChaosSpec object: %T\n", oldNetworkChaosSpec)
+	// fmt.Printf("Type of old object: %T\n", old)
+	// oldNetworkChaosSpec, ok := old.(*NetworkChaosSpec)
+	// fmt.Printf("Type of oldNetworkChaosSpec object: %T\n", oldNetworkChaosSpec)
 	oldNetworkChaos, _ := old.(*NetworkChaos)
 	fmt.Printf("Type of oldNetworkChaos object: %T\n", oldNetworkChaos)
 
-	if !ok {
-		return nil, errors.New("invalid object type")
-	}
-	if r.Spec.Stream != oldNetworkChaosSpec.Stream {
+	// if !ok {
+	// 	return nil, errors.New("invalid object type")
+	// }
+	if r.Spec.Stream != oldNetworkChaos.Spec.Stream {
 		return nil, errors.New("modification of Stream field is not allowed")
 	}
-	if r.Spec.Upstream != oldNetworkChaosSpec.Upstream {
+	if r.Spec.Upstream != oldNetworkChaos.Spec.Upstream {
 		return nil, errors.New("modification of Upstream field is not allowed")
 	}
 
