@@ -295,7 +295,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 		log.Error(err, "its empty")
 	}
 	svc := &corev1.Service{}
-	err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc)
+	err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy-"+networkChaos.GetName(), port, port)
