@@ -69,6 +69,7 @@ func (r *NetworkChaos) ValidateUpdate(old runtime.Object) (admission.Warnings, e
 	oldNetworkChaos, _ := old.(*NetworkChaos)
 	fmt.Printf("Type of oldNetworkChaos object: %T\n", oldNetworkChaos)
 
+	//TODO
 	// if !ok {
 	// 	return nil, errors.New("invalid object type")
 	// }

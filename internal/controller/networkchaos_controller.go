@@ -333,19 +333,40 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 		}
 	}
 
-	// Add a toxic if it doesn't exist
-	if !exists {
+	// Update the toxic if it exists
+	if exists {
+		_, err = proxy.UpdateToxic(networkChaos.GetName(), networkChaos.Spec.LatencyToxic.Probability, toxiproxy.Attributes{
+			"latency":  networkChaos.Spec.LatencyToxic.Latency,
+			"jitter":   networkChaos.Spec.LatencyToxic.Jitter,
+			"toxicity": networkChaos.Spec.LatencyToxic.Probability,
+		})
+		if err != nil {
+			log.Error(err, "Failed to update toxic")
+			return err
+		}
+		log.Info("toxic(name) updated on port .... with this upstream")
+	} else {
+		// Add the toxic if it doesn't exist
 		_, err = proxy.AddToxic(networkChaos.GetName(), "latency", networkChaos.Spec.Stream, networkChaos.Spec.LatencyToxic.Probability, toxiproxy.Attributes{
-			"latency": networkChaos.Spec.LatencyToxic.Latency,
-			"jitter":  networkChaos.Spec.LatencyToxic.Jitter,
+			"latency":  networkChaos.Spec.LatencyToxic.Latency,
+			"jitter":   networkChaos.Spec.LatencyToxic.Jitter,
+			"toxicity": networkChaos.Spec.LatencyToxic.Probability,
 		})
 		if err != nil {
 			log.Error(err, "Failed to create toxic")
 			return err
 		}
 		log.Info("toxic(name) added on port .... with this upstream")
-	} else {
-		log.Info("toxic(name) already exists")
+	}
+	// Disable the proxy if NetworkChaosSpec.Enable is false
+	if !networkChaos.Spec.Enabled {
+		err := proxy.Disable()
+		if err != nil {
+			log.Error(err, "Failed to disable the proxy")
+			return err
+		}
+		log.Info("Proxy Updated and disabled")
+		return nil
 	}
 	return nil
 }
