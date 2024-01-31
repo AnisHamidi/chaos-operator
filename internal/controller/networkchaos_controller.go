@@ -180,7 +180,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+chaosName, "toxiproxy-"+chaosName, toxiproxyPort, toxiproxyPort)
 			err = r.Client.Create(ctx, ser)
 			if err != nil {
-				log.Error(err, "Failed to create toxiproxy Service")
+				log.Error(err, "Failed to create toxiproxy Service for TOXIPROXY")
 				return err
 			}
 			log.Info("toxiproxy Service created successfully")
@@ -252,7 +252,7 @@ func (r *NetworkChaosReconciler) manageToxiproxyProxies(ctx context.Context, req
 	if err != nil {
 		return err
 	}
-
+	log.Log.Info("before creating service for toxi proexy")
 	if err := r.ensureToxiproxyServiceForProxy(ctx, req, proxy, networkChaos); err != nil {
 		return err
 	}
@@ -301,7 +301,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy-"+networkChaos.GetName(), port, port)
 			err = r.Client.Create(ctx, ser)
 			if err != nil {
-				log.Error(err, "Failed to create Service")
+				log.Error(err, "Failed to create Service for proxy")
 				return err
 			}
 
