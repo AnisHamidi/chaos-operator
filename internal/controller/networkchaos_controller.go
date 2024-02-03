@@ -33,7 +33,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // NetworkChaosReconciler reconciles a NetworkChaos object
@@ -117,9 +121,23 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&chaosv1alpha1.NetworkChaos{}).
-		Complete(r)
+	// Watch for changes to primary resource NetworkChaos
+	builder := ctrl.NewControllerManagedBy(mgr).
+		For(&chaosv1alpha1.NetworkChaos{})
+
+	// Watch for changes to Pods with the label chaos:toxi
+	err := builder.Watches(&source.Kind{Type: &corev1.Pod{}}, &handler.EnqueueRequestForOwner{
+		IsController: true,
+		OwnerType:    &chaosv1alpha1.NetworkChaos{},
+	}, builder.WithPredicates(predicate.Funcs{
+		CreateFunc: func(e event.CreateEvent) bool {
+			_, found := e.Object.GetLabels()["chaos"]
+			return found && e.Object.GetLabels()["chaos"] == "toxi"
+		},
+	})).Complete(r)
+
+	return err
+
 }
 
 func (r *NetworkChaosReconciler) checkNetworkChaosInstanceMarkedDeleted(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
