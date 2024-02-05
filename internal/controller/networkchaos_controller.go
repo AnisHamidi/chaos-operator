@@ -24,7 +24,9 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	toxiproxy "github.com/Shopify/toxiproxy/client"
 	"github.com/pingcap/errors"
@@ -36,6 +38,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/source"
+
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -124,11 +129,15 @@ func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	labelPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
 		return obj.GetLabels()["app"] == "toxiproxy"
 	})
-
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&chaosv1alpha1.NetworkChaos{}).
-		// Watches Pods with a specific label and uses the labelPredicate defined above
-		For(&corev1.Pod{}, builder.WithPredicates(labelPredicate)).
+		Watches(
+			&source.Kind{Type: &corev1.Pod{}},
+			&handler.EnqueueRequestForOwner{
+				IsController: true,
+				OwnerType:    &chaosv1alpha1.NetworkChaos{},
+			},
+			builder.WithPredicates(labelPredicate)).
 		Complete(r)
 }
 
