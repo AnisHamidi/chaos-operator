@@ -21,6 +21,11 @@ import (
 	"strconv"
 	"strings"
 
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+
 	toxiproxy "github.com/Shopify/toxiproxy/client"
 	"github.com/pingcap/errors"
 	chaosv1alpha1 "github.com/snapp-incubator/toxiproxy-operator/api/v1alpha1"
@@ -31,8 +36,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -117,10 +120,16 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	// Predicate to filter Pods with the label chaos=true
+	labelPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
+		return obj.GetLabels()["chaos"] == "true"
+	})
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&chaosv1alpha1.NetworkChaos{}).
+		// Watches Pods with a specific label and uses the labelPredicate defined above
+		For(&corev1.Pod{}, builder.WithPredicates(labelPredicate)).
 		Complete(r)
-
 }
 
 func (r *NetworkChaosReconciler) checkNetworkChaosInstanceMarkedDeleted(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
