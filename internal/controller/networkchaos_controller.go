@@ -122,7 +122,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Predicate to filter Pods with the label chaos=true
 	labelPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
-		return obj.GetLabels()["chaos"] == "true"
+		return obj.GetLabels()["app"] == "toxiproxy"
 	})
 
 	return ctrl.NewControllerManagedBy(mgr).
@@ -203,7 +203,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 }
 func (r *NetworkChaosReconciler) createToxiproxyDeployment(ns string, name string) *appsv1.Deployment {
 	// Define labels
-	labels := map[string]string{"app": "toxiproxy-" + name}
+	labels := map[string]string{"app": "toxiproxy"}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
