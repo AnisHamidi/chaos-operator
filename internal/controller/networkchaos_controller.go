@@ -206,7 +206,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 }
 func (r *NetworkChaosReconciler) createToxiproxyDeployment(ns string, name string) *appsv1.Deployment {
 	// Define labels
-	labels := map[string]string{"app": "toxiproxy"}
+	labels := map[string]string{"app": "toxiproxy-" + name}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
