@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	toxiproxy "github.com/Shopify/toxiproxy/client"
 	"github.com/pingcap/errors"
@@ -39,7 +38,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -132,12 +130,10 @@ func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&chaosv1alpha1.NetworkChaos{}).
 		Watches(
-			&source.Kind{Type: &corev1.Pod{}},
-			&handler.EnqueueRequestForOwner{
-				IsController: true,
-				OwnerType:    &chaosv1alpha1.NetworkChaos{},
-			},
-			builder.WithPredicates(labelPredicate)).
+			&corev1.Pod{},
+			&handler.EnqueueRequestForObject{},
+			builder.WithPredicates(labelPredicate),
+		).
 		Complete(r)
 }
 
