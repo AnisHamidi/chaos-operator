@@ -385,7 +385,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 }
 
 func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
-	log := log.FromContext(ctx)
+	//log := log.FromContext(ctx)
 
 	// Initialize Toxiproxy client
 	// toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
