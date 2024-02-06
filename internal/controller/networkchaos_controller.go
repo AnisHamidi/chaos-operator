@@ -81,6 +81,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
+			//TODO fek mikonam in nabayad error bashe chon injori har sweri ba koli error miad bala
 			log.Error(err, "NetworkChaos resource not found")
 			return ctrl.Result{}, nil
 		}
@@ -286,7 +287,9 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 		// Proxy does not exist, create a new one
 		// TODO
 		// a service validation should be done on upstream name ******
-		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
+		//proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "45791", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
+		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "45791", "172.30.93.227:8080")
+
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
 			return proxy, err
