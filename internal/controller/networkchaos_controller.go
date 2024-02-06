@@ -76,21 +76,18 @@ const (
 func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
 
-	log.Info("befor Fetch NetworkChaos object")
-
 	// Fetch NetworkChaos object
 	networkChaos := &chaosv1alpha1.NetworkChaos{}
 	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
+
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Error(err, "NetworkChaos resource not found")
-			//log.Error(err, "NetworkChaos resource not found", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
 		log.Error(err, "Failed to get NetworkChaos")
 		return ctrl.Result{}, err
 	}
-	log.Info("befor GetDeletionTimestamp")
 
 	// Check if the networkChaos instance is marked to be deleted
 	if networkChaos.GetDeletionTimestamp() != nil {
@@ -98,27 +95,22 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 	}
-	log.Info("befor finizler")
 	// Add finalizer for this CR
 	if !contains(networkChaos.GetFinalizers(), chaosFinalizer) {
 		if err := r.addFinalizer(ctx, networkChaos); err != nil {
 			return ctrl.Result{}, err
 		}
 	}
-	log.Info("befor ensureToxiproxyDeployment")
 
 	// Ensure toxiproxy Deployment is created
 	if err := r.ensureToxiproxyDeployment(ctx, req, networkChaos); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	log.Info("befor ensureToxiproxyService")
-
 	// Ensure toxiproxy Service is created
 	if err := r.ensureToxiproxyService(ctx, req, networkChaos); err != nil {
 		return ctrl.Result{}, err
 	}
-	log.Info("befor manageToxiproxyProxies")
 
 	// Manage Toxiproxy Proxies and Toxics
 	if err := r.manageToxiproxyProxies(ctx, req, networkChaos); err != nil {
