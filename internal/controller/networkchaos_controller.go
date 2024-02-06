@@ -388,43 +388,43 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req c
 	log := log.FromContext(ctx)
 
 	// Initialize Toxiproxy client
-	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
+	// toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
 
-	// Determine the proxy name related to the CRD instance
-	// This depends on how you associate your CRD instances with Toxiproxy proxies
-	// For example, it could be something like this:
-	proxyName := networkChaos.GetName()
+	// // Determine the proxy name related to the CRD instance
+	// // This depends on how you associate your CRD instances with Toxiproxy proxies
+	// // For example, it could be something like this:
+	// proxyName := networkChaos.GetName()
 
-	// Delete the proxy
-	proxy, err := toxiproxyClient.Proxy(proxyName)
-	if err != nil {
-		log.Error(err, "Failed to get proxy")
-		return err
+	// // Delete the proxy
+	// proxy, err := toxiproxyClient.Proxy(proxyName)
+	// if err != nil {
+	// 	log.Error(err, "Failed to get proxy")
+	// 	return err
 
-	}
-	err = proxy.Delete()
-	if err != nil {
-		log.Error(err, "Failed to delete Toxiproxy proxy")
-		return err
-	}
-	// Delete the svc
+	// }
+	// err = proxy.Delete()
+	// if err != nil {
+	// 	log.Error(err, "Failed to delete Toxiproxy proxy")
+	// 	return err
+	// }
+	// // Delete the svc
 
-	svcName := "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name
-	svc := &corev1.Service{}
+	// svcName := "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name
+	// svc := &corev1.Service{}
 
-	// Try to get the Service if it exists
-	err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
-	if err != nil {
-		log.Error(err, "Failed to get proxy svc")
-		return err
+	// // Try to get the Service if it exists
+	// err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
+	// if err != nil {
+	// 	log.Error(err, "Failed to get proxy svc")
+	// 	return err
 
-	}
-	// Delete the service
-	if err := r.Client.Delete(ctx, svc); err != nil {
-		log.Error(err, "Failed to delete proxy svc")
-		return err
-	}
-	log.Info("Successfully finalized and deleted Toxiproxy proxy")
+	// }
+	// // Delete the service
+	// if err := r.Client.Delete(ctx, svc); err != nil {
+	// 	log.Error(err, "Failed to delete proxy svc")
+	// 	return err
+	// }
+	// log.Info("Successfully finalized and deleted Toxiproxy proxy")
 	return nil
 
 }
