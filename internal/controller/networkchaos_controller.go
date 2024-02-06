@@ -83,10 +83,11 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			log.Error(err, "NetworkChaos resource not found", req.NamespacedName)
+			log.Error(err, "NetworkChaos resource not found")
+			//log.Error(err, "NetworkChaos resource not found", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
-		log.Error(err, "Failed to get NetworkChaos", req.NamespacedName)
+		log.Error(err, "Failed to get NetworkChaos")
 		return ctrl.Result{}, err
 	}
 	log.Info("befor GetDeletionTimestamp")
