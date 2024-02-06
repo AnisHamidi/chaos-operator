@@ -19,7 +19,6 @@ package controller
 import (
 	"context"
 	"strconv"
-	"strings"
 
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -283,20 +282,20 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 
 	proxy, err := toxiproxyClient.Proxy(networkChaos.GetName())
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
-			// Proxy does not exist, create a new one
-			// TODO
-			// a service validation should be done on upstream name ******
-			proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
-			if err != nil {
-				log.Error(err, "Failed to create proxy")
-				return proxy, err
-			}
-			log.Info("proxy for service " + networkChaos.Spec.Upstream.Name + "created successfully in namespace " + req.Namespace)
-		} else {
-			log.Error(err, "Failed to get proxy")
+		// if strings.Contains(err.Error(), "not found") {
+		// Proxy does not exist, create a new one
+		// TODO
+		// a service validation should be done on upstream name ******
+		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
+		if err != nil {
+			log.Error(err, "Failed to create proxy")
 			return proxy, err
 		}
+		log.Info("proxy for service " + networkChaos.Spec.Upstream.Name + "created successfully in namespace " + req.Namespace)
+		// } else {
+		// 	log.Error(err, "Failed to get proxy")
+		// 	return proxy, err
+		// }
 	}
 	return proxy, nil
 }
