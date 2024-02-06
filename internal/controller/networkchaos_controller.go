@@ -191,7 +191,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + chaosName, Namespace: req.Namespace}, svc)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+chaosName, "toxiproxy-"+chaosName, toxiproxyPort, toxiproxyPort)
+			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+chaosName, "toxiproxy", toxiproxyPort, toxiproxyPort)
 			err = r.Client.Create(ctx, ser)
 			if err != nil {
 				log.Error(err, "Failed to create toxiproxy Service for TOXIPROXY")
@@ -207,7 +207,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 }
 func (r *NetworkChaosReconciler) createToxiproxyDeployment(ns string, name string) *appsv1.Deployment {
 	// Define labels
-	labels := map[string]string{"app": "toxiproxy-" + name}
+	labels := map[string]string{"app": "toxiproxy"}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
@@ -314,7 +314,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 	err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy-"+networkChaos.GetName(), port, port)
+			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy", port, port)
 			err = r.Client.Create(ctx, ser)
 			if err != nil {
 				log.Error(err, "Failed to create Service for proxy")
