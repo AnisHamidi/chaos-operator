@@ -186,6 +186,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 
 	svc := &corev1.Service{}
 	chaosName := networkChaos.GetName()
+	//Todo fill the lables choas name before calling the function
 
 	// Try to get the Service if it exists
 	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + chaosName, Namespace: req.Namespace}, svc)
@@ -287,8 +288,8 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 		// Proxy does not exist, create a new one
 		// TODO
 		// a service validation should be done on upstream name ******
-		//proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "45791", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
-		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "45791", "172.30.93.227:8080")
+		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
+		//proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "45791", "172.30.93.227:8080")
 
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
