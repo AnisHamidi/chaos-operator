@@ -25,6 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	toxiproxy "github.com/Shopify/toxiproxy/client"
 	"github.com/pingcap/errors"
@@ -128,16 +129,60 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 }
 
 // SetupWithManager sets up the controller with the Manager.
+// func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
+// 	// Predicate to filter Pods with the label chaos=true
+// 	labelPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
+// 		return obj.GetLabels()["app"] == "toxiproxy"
+// 	})
+// 	// 	// Map a Pod deletion event to a NetworkChaos reconcile request
+
+// 	return ctrl.NewControllerManagedBy(mgr).
+// 		For(&chaosv1alpha1.NetworkChaos{}).
+// 		Watches(
+// 			&corev1.Pod{},
+// 			&handler.EnqueueRequestForObject{},
+// 			builder.WithPredicates(labelPredicate),
+// 		).
+// 		Complete(r)
+// }
+
 func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// Predicate to filter Pods with the label chaos=true
+	// Predicate to filter Pods with the label app=toxiproxy
 	labelPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
 		return obj.GetLabels()["app"] == "toxiproxy"
 	})
+
+	// Map a Pod deletion event to reconcile requests for all NetworkChaos resources
+	mapFunc := func(c context.Context, a client.Object) []reconcile.Request {
+		ctx := context.Background()
+		log := log.FromContext(ctx)
+
+		var requests []reconcile.Request
+
+		var networkChaosList chaosv1alpha1.NetworkChaosList
+		if err := mgr.GetClient().List(ctx, &networkChaosList, &client.ListOptions{}); err != nil {
+			// Handle error
+			log.Error(err, "Unable to list NetworkChaos resources")
+			return nil
+		}
+
+		for _, networkChaos := range networkChaosList.Items {
+			requests = append(requests, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Name:      networkChaos.Name,
+					Namespace: networkChaos.Namespace,
+				},
+			})
+		}
+
+		return requests
+	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&chaosv1alpha1.NetworkChaos{}).
 		Watches(
 			&corev1.Pod{},
-			&handler.EnqueueRequestForObject{},
+			handler.EnqueueRequestsFromMapFunc(mapFunc),
 			builder.WithPredicates(labelPredicate),
 		).
 		Complete(r)
