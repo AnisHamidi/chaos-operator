@@ -78,10 +78,12 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Fetch NetworkChaos object
 	networkChaos := &chaosv1alpha1.NetworkChaos{}
 	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
+	log.Info(networkChaos.GetName())
+	log.Info("test")
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			//TODO fek mikonam in nabayad error bashe chon injori har sweri ba koli error miad bala
+			//TODO fek mikonam in nabayad error bashe chon injori har sweri ba koli error miad bala info beshe va jomlash in bashe k momkene delete shode bashe
 			log.Error(err, "NetworkChaos resource not found")
 			return ctrl.Result{}, nil
 		}
