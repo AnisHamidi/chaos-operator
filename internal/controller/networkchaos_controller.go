@@ -213,13 +213,11 @@ func (r *NetworkChaosReconciler) ensureToxiproxyDeployment(ctx context.Context, 
 	log := log.FromContext(ctx)
 
 	deployment := &appsv1.Deployment{}
-	chaosName := networkChaos.GetName()
-
 	// Try to get the Deployment if it exists
-	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + chaosName, Namespace: req.Namespace}, deployment)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + req.Namespace, Namespace: req.Namespace}, deployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			dep := r.createToxiproxyDeployment(req.Namespace, chaosName)
+			dep := r.createToxiproxyDeployment(req.Namespace)
 			err = r.Client.Create(ctx, dep)
 			if err != nil {
 				log.Error(err, "Failed to create toxiproxy Deployment")
@@ -237,14 +235,14 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 	log := log.FromContext(ctx)
 
 	svc := &corev1.Service{}
-	chaosName := networkChaos.GetName()
+	//chaosName := networkChaos.GetName()
 	//Todo fill the lables choas name before calling the function
 
 	// Try to get the Service if it exists
-	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + chaosName, Namespace: req.Namespace}, svc)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + req.Namespace, Namespace: req.Namespace}, svc)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+chaosName, "toxiproxy", toxiproxyPort, toxiproxyPort)
+			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+req.Namespace, "toxiproxy", toxiproxyPort, toxiproxyPort)
 			err = r.Client.Create(ctx, ser)
 			if err != nil {
 				log.Error(err, "Failed to create toxiproxy Service for TOXIPROXY")
@@ -258,13 +256,13 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 	}
 	return nil
 }
-func (r *NetworkChaosReconciler) createToxiproxyDeployment(ns string, name string) *appsv1.Deployment {
+func (r *NetworkChaosReconciler) createToxiproxyDeployment(ns string) *appsv1.Deployment {
 	// Define labels
 	labels := map[string]string{"app": "toxiproxy"}
 
 	dep := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "toxiproxy-" + name,
+			Name:      "toxiproxy-" + ns,
 			Namespace: ns,
 			Labels:    labels,
 		},
@@ -312,7 +310,7 @@ func (r *NetworkChaosReconciler) createToxiproxyService(ns string, name string, 
 func (r *NetworkChaosReconciler) manageToxiproxyProxies(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
 
 	// Create a new Toxiproxy client
-	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
+	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + req.Namespace + "." + req.Namespace + ".svc.cluster.local:8474")
 
 	// Attempt to retrieve an existing proxy
 	proxy, err := r.getOrCreateProxy(ctx, req, toxiproxyClient, networkChaos)
