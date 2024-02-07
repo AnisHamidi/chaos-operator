@@ -79,8 +79,9 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	networkChaos := &chaosv1alpha1.NetworkChaos{}
 	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
 	log.Info(networkChaos.GetName())
-	log.Info("test")
+	log.Info("a test before get namespace name")
 	log.Info(req.NamespacedName.Name)
+	log.Info("a test after get namespace name")
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
