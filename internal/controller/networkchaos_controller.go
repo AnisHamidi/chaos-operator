@@ -81,6 +81,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	log.Info(networkChaos.GetName())
 	log.Info("a test before get namespace name")
 	log.Info(req.NamespacedName.Name)
+	log.Info(req.Namespace)
 	log.Info("a test after get namespace name")
 
 	if err != nil {
