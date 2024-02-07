@@ -79,14 +79,6 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Fetch NetworkChaos object
 	networkChaos := &chaosv1alpha1.NetworkChaos{}
 	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
-	log.Info("******************************************")
-	log.Info(networkChaos.GetName())
-	log.Info("a test before get namespace name")
-	log.Info(req.NamespacedName.Name)
-	log.Info("*************")
-	log.Info(req.Namespace)
-	log.Info("a test after get namespace name")
-	log.Info("******************************************")
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
@@ -127,24 +119,6 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	return ctrl.Result{}, nil
 }
-
-// SetupWithManager sets up the controller with the Manager.
-// func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
-// 	// Predicate to filter Pods with the label chaos=true
-// 	labelPredicate := predicate.NewPredicateFuncs(func(obj client.Object) bool {
-// 		return obj.GetLabels()["app"] == "toxiproxy"
-// 	})
-// 	// 	// Map a Pod deletion event to a NetworkChaos reconcile request
-
-// 	return ctrl.NewControllerManagedBy(mgr).
-// 		For(&chaosv1alpha1.NetworkChaos{}).
-// 		Watches(
-// 			&corev1.Pod{},
-// 			&handler.EnqueueRequestForObject{},
-// 			builder.WithPredicates(labelPredicate),
-// 		).
-// 		Complete(r)
-// }
 
 func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	// Predicate to filter Pods with the label app=toxiproxy
@@ -213,8 +187,11 @@ func (r *NetworkChaosReconciler) ensureToxiproxyDeployment(ctx context.Context, 
 	log := log.FromContext(ctx)
 
 	deployment := &appsv1.Deployment{}
+
+	deploymentName := "toxiproxy-" + req.Namespace
+
 	// Try to get the Deployment if it exists
-	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + req.Namespace, Namespace: req.Namespace}, deployment)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: req.Namespace}, deployment)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			dep := r.createToxiproxyDeployment(req.Namespace)
@@ -232,17 +209,18 @@ func (r *NetworkChaosReconciler) ensureToxiproxyDeployment(ctx context.Context, 
 	return nil
 }
 func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
-	log := log.FromContext(ctx)
 
+	log := log.FromContext(ctx)
 	svc := &corev1.Service{}
-	//chaosName := networkChaos.GetName()
-	//Todo fill the lables choas name before calling the function
+
+	svcName := "toxiproxy-" + req.Namespace
+	selector := "toxiproxy"
 
 	// Try to get the Service if it exists
-	err := r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + req.Namespace, Namespace: req.Namespace}, svc)
+	err := r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+req.Namespace, "toxiproxy", toxiproxyPort, toxiproxyPort)
+			ser := r.createToxiproxyService(req.Namespace, svcName, selector, toxiproxyPort, toxiproxyPort)
 			err = r.Client.Create(ctx, ser)
 			if err != nil {
 				log.Error(err, "Failed to create toxiproxy Service for TOXIPROXY")
@@ -339,7 +317,6 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 		// TODO
 		// a service validation should be done on upstream name ******
 		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
-		//proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "45791", "172.30.93.227:8080")
 
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
