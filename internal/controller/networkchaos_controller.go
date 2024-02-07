@@ -89,8 +89,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			//TODO fek mikonam in nabayad error bashe chon injori har sweri ba koli error miad bala info beshe va jomlash in bashe k momkene delete shode bashe
-			log.Error(err, "NetworkChaos resource not found")
+			log.Info("NetworkChaos resource not found. Ignoring since the object must be deleted", "NetworkChaos", req.NamespacedName)
 			return ctrl.Result{}, nil
 		}
 		log.Error(err, "Failed to get NetworkChaos")
