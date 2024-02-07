@@ -80,6 +80,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
 	log.Info(networkChaos.GetName())
 	log.Info("test")
+	log.Info(req.NamespacedName.Name)
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
