@@ -78,11 +78,14 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	// Fetch NetworkChaos object
 	networkChaos := &chaosv1alpha1.NetworkChaos{}
 	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
+	log.Info("******************************************")
 	log.Info(networkChaos.GetName())
 	log.Info("a test before get namespace name")
 	log.Info(req.NamespacedName.Name)
+	log.Info("*************")
 	log.Info(req.Namespace)
 	log.Info("a test after get namespace name")
+	log.Info("******************************************")
 
 	if err != nil {
 		if apierrors.IsNotFound(err) {
