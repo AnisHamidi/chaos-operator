@@ -300,7 +300,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 	log := log.FromContext(ctx)
 
 	proxy, err := toxiproxyClient.Proxy(networkChaos.GetName())
-	port := "8085"
+	port := "0.0.0.0:8085"
 
 	// Todo
 	if err != nil {
