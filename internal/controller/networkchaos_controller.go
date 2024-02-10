@@ -300,7 +300,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 	log := log.FromContext(ctx)
 
 	proxy, err := toxiproxyClient.Proxy(networkChaos.GetName())
-	//port := ""
+	port := "8085"
 
 	// Todo
 	if err != nil {
@@ -309,7 +309,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 		// TODO
 		// a service validation should be done on upstream name ******
 		//ghabl az create bia check kon aya service sakhte shode ya ma
-		//svc := &corev1.Service{}
+		// svc := &corev1.Service{}
 		// if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
 		// 	if errors.IsNotFound(err) {
 		// 		// Handle the case where the service does not exist
@@ -327,7 +327,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 		// log.Info("******proxy Upstream port: " + networkChaos.Spec.Upstream.Port)
 		// log.Info("******proxy Upstream name: " + networkChaos.Spec.Upstream.Name)
 
-		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
+		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), port, networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
 		//todo check if exists dont
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
