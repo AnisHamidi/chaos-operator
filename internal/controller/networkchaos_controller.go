@@ -300,13 +300,31 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 	log := log.FromContext(ctx)
 
 	proxy, err := toxiproxyClient.Proxy(networkChaos.GetName())
+	port := ""
+
 	// Todo
 	if err != nil {
 		// if strings.Contains(err.Error(), "not found") {
 		// Proxy does not exist, create a new one
 		// TODO
 		// a service validation should be done on upstream name ******
-		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
+		//ghabl az create bia check kon aya service sakhte shode ya ma
+		svc := &corev1.Service{}
+		if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
+			if errors.IsNotFound(err) {
+				// Handle the case where the service does not exist
+				log.Info("Service does not exist\n")
+			}
+		} else {
+			// Service exists, extract the port
+			if len(svc.Spec.Ports) > 0 {
+				port = strconv.Itoa(int(svc.Spec.Ports[0].Port))
+			} else {
+				log.Info("Service does not expose any ports\n")
+			}
+		}
+
+		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), port, networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
 
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
