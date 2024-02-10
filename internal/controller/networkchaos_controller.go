@@ -313,18 +313,18 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 		if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
 			if errors.IsNotFound(err) {
 				// Handle the case where the service does not exist
-				log.Info("Service does not exist\n")
+				log.Info("Service does not exist")
 			}
 		} else {
 			// Service exists, extract the port
 			if len(svc.Spec.Ports) > 0 {
 				port = strconv.Itoa(int(svc.Spec.Ports[0].Port))
 			} else {
-				log.Info("Service does not expose any ports\n")
+				log.Info("Service does not expose any ports")
 			}
 		}
 		log.Info("******proxy port: " + port)
-		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
+		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), "34373", networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
 		//todo check if exists dont
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
