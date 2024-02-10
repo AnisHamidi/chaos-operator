@@ -323,9 +323,9 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 				log.Info("Service does not expose any ports\n")
 			}
 		}
-
+		log.Info("******proxy port: " + port)
 		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), port, networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
-
+		//todo check if exists dont
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
 			return proxy, err
