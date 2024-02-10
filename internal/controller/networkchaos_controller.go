@@ -78,9 +78,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 
 	// Fetch NetworkChaos object
 	networkChaos := &chaosv1alpha1.NetworkChaos{}
-	err := r.Client.Get(ctx, req.NamespacedName, networkChaos)
-
-	if err != nil {
+	if err := r.Client.Get(ctx, req.NamespacedName, networkChaos); err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Info("NetworkChaos resource not found. Ignoring since the object must be deleted", "NetworkChaos", req.NamespacedName)
 			return ctrl.Result{}, nil
@@ -88,7 +86,6 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		log.Error(err, "Failed to get NetworkChaos")
 		return ctrl.Result{}, err
 	}
-
 	// Check if the networkChaos instance is marked to be deleted
 	if networkChaos.GetDeletionTimestamp() != nil {
 		if err := r.checkNetworkChaosInstanceMarkedDeleted(ctx, req, networkChaos); err != nil {
@@ -101,17 +98,14 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 			return ctrl.Result{}, err
 		}
 	}
-
 	// Ensure toxiproxy Deployment is created
 	if err := r.ensureToxiproxyDeployment(ctx, req, networkChaos); err != nil {
 		return ctrl.Result{}, err
 	}
-
 	// Ensure toxiproxy Service is created
 	if err := r.ensureToxiproxyService(ctx, req, networkChaos); err != nil {
 		return ctrl.Result{}, err
 	}
-
 	// Manage Toxiproxy Proxies and Toxics
 	if err := r.manageToxiproxyProxies(ctx, req, networkChaos); err != nil {
 		return ctrl.Result{}, err
@@ -173,8 +167,7 @@ func (r *NetworkChaosReconciler) checkNetworkChaosInstanceMarkedDeleted(ctx cont
 
 		// Remove Finalizer
 		networkChaos.SetFinalizers(remove(networkChaos.GetFinalizers(), chaosFinalizer))
-		err := r.Update(ctx, networkChaos)
-		if err != nil {
+		if err := r.Update(ctx, networkChaos); err != nil {
 			return err
 		}
 	}
@@ -191,12 +184,10 @@ func (r *NetworkChaosReconciler) ensureToxiproxyDeployment(ctx context.Context, 
 	deploymentName := "toxiproxy-" + req.Namespace
 
 	// Try to get the Deployment if it exists
-	err := r.Client.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: req.Namespace}, deployment)
-	if err != nil {
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: deploymentName, Namespace: req.Namespace}, deployment); err != nil {
 		if errors.IsNotFound(err) {
 			dep := r.createToxiproxyDeployment(req.Namespace)
-			err = r.Client.Create(ctx, dep)
-			if err != nil {
+			if err = r.Client.Create(ctx, dep); err != nil {
 				log.Error(err, "Failed to create toxiproxy Deployment")
 				return err
 			}
@@ -217,12 +208,10 @@ func (r *NetworkChaosReconciler) ensureToxiproxyService(ctx context.Context, req
 	selector := "toxiproxy"
 
 	// Try to get the Service if it exists
-	err := r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
-	if err != nil {
+	if err := r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc); err != nil {
 		if errors.IsNotFound(err) {
 			ser := r.createToxiproxyService(req.Namespace, svcName, selector, toxiproxyPort, toxiproxyPort)
-			err = r.Client.Create(ctx, ser)
-			if err != nil {
+			if err = r.Client.Create(ctx, ser); err != nil {
 				log.Error(err, "Failed to create toxiproxy Service for TOXIPROXY")
 				return err
 			}
@@ -291,11 +280,11 @@ func (r *NetworkChaosReconciler) manageToxiproxyProxies(ctx context.Context, req
 	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + req.Namespace + "." + req.Namespace + ".svc.cluster.local:8474")
 
 	// Attempt to retrieve an existing proxy
+	// Todo
 	proxy, err := r.getOrCreateProxy(ctx, req, toxiproxyClient, networkChaos)
 	if err != nil {
 		return err
 	}
-	log.Log.Info("before creating service for toxi proexy")
 	if err := r.ensureToxiproxyServiceForProxy(ctx, req, proxy, networkChaos); err != nil {
 		return err
 	}
@@ -311,6 +300,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 	log := log.FromContext(ctx)
 
 	proxy, err := toxiproxyClient.Proxy(networkChaos.GetName())
+	// Todo
 	if err != nil {
 		// if strings.Contains(err.Error(), "not found") {
 		// Proxy does not exist, create a new one
@@ -339,16 +329,13 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 		log.Error(err, "its empty")
 	}
 	svc := &corev1.Service{}
-	err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc)
-	if err != nil {
+	if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
 		if errors.IsNotFound(err) {
 			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy", port, port)
-			err = r.Client.Create(ctx, ser)
-			if err != nil {
+			if err = r.Client.Create(ctx, ser); err != nil {
 				log.Error(err, "Failed to create Service for proxy")
 				return err
 			}
-
 			log.Info("Service created successfully")
 		} else {
 			// Error other than NotFound
@@ -404,8 +391,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	}
 	// Disable the proxy if NetworkChaosSpec.Enable is false
 	if !networkChaos.Spec.Enabled {
-		err := proxy.Disable()
-		if err != nil {
+		if err := proxy.Disable(); err != nil {
 			log.Error(err, "Failed to disable the proxy")
 			return err
 		}
@@ -466,8 +452,7 @@ func (r *NetworkChaosReconciler) addFinalizer(ctx context.Context, networkChaos 
 	networkChaos.SetFinalizers(append(networkChaos.GetFinalizers(), chaosFinalizer))
 
 	// Update CR
-	err := r.Update(context.Background(), networkChaos)
-	if err != nil {
+	if err := r.Update(context.Background(), networkChaos); err != nil {
 		log.Error(err, "Failed to update NetworkChaos with finalizer")
 		return err
 	}
