@@ -323,10 +323,6 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 				log.Info("Service does not expose any ports")
 			}
 		}
-		log.Info("******proxy port: " + listen)
-		log.Info("******proxy Upstream port: " + networkChaos.Spec.Upstream.Port)
-		log.Info("******proxy Upstream name: " + networkChaos.Spec.Upstream.Name)
-
 		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), listen, networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
 		//todo check if exists dont
 		if err != nil {
@@ -423,46 +419,47 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 }
 
 func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
-	//log := log.FromContext(ctx)
+	log := log.FromContext(ctx)
 
 	// Initialize Toxiproxy client
-	// toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
+	//toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
+	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + req.Namespace + "." + req.Namespace + ".svc.cluster.local:8474")
 
 	// // Determine the proxy name related to the CRD instance
 	// // This depends on how you associate your CRD instances with Toxiproxy proxies
-	// // For example, it could be something like this:
-	// proxyName := networkChaos.GetName()
+	// For example, it could be something like this:
+	proxyName := networkChaos.GetName()
 
-	// // Delete the proxy
-	// proxy, err := toxiproxyClient.Proxy(proxyName)
-	// if err != nil {
-	// 	log.Error(err, "Failed to get proxy")
-	// 	return err
+	// Delete the proxy
+	proxy, err := toxiproxyClient.Proxy(proxyName)
+	if err != nil {
+		log.Error(err, "Failed to get proxy")
+		return err
 
-	// }
-	// err = proxy.Delete()
-	// if err != nil {
-	// 	log.Error(err, "Failed to delete Toxiproxy proxy")
-	// 	return err
-	// }
-	// // Delete the svc
+	}
+	err = proxy.Delete()
+	if err != nil {
+		log.Error(err, "Failed to delete Toxiproxy proxy")
+		return err
+	}
+	// Delete the svc
 
-	// svcName := "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name
-	// svc := &corev1.Service{}
+	svcName := "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name
+	svc := &corev1.Service{}
 
-	// // Try to get the Service if it exists
-	// err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
-	// if err != nil {
-	// 	log.Error(err, "Failed to get proxy svc")
-	// 	return err
+	// Try to get the Service if it exists
+	err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
+	if err != nil {
+		log.Error(err, "Failed to get proxy svc")
+		return err
 
-	// }
-	// // Delete the service
-	// if err := r.Client.Delete(ctx, svc); err != nil {
-	// 	log.Error(err, "Failed to delete proxy svc")
-	// 	return err
-	// }
-	// log.Info("Successfully finalized and deleted Toxiproxy proxy")
+	}
+	// Delete the service
+	if err := r.Client.Delete(ctx, svc); err != nil {
+		log.Error(err, "Failed to delete proxy svc")
+		return err
+	}
+	log.Info("Successfully finalized and deleted Toxiproxy proxy")
 	return nil
 
 }
