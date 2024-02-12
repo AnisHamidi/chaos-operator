@@ -68,6 +68,7 @@ func (r *NetworkChaos) ValidateCreate() (admission.Warnings, error) {
 		Namespace: r.Namespace,
 	}
 	// Attempt to fetch the specified service
+	logf.Log.Info("its a test ")
 	svc := &v1.Service{}
 	if err := runtimeClient.Get(ctx, svcNamespacedName, svc); err != nil {
 		// If the service is not found, return an error to block the creation of the NetworkChaos object
