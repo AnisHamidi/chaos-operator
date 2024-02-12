@@ -392,7 +392,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 			log.Error(err, "Failed to update toxic")
 			return err
 		}
-		log.Info("toxic(name) updated on port .... with this upstream")
+		log.Info("Toxic" + networkChaos.GetName() + "updated on proxy" + proxy.Name)
 	} else {
 		// Add the toxic if it doesn't exist
 		_, err = proxy.AddToxic(networkChaos.GetName(), "latency", networkChaos.Spec.Stream, networkChaos.Spec.LatencyToxic.Probability, toxiproxy.Attributes{
@@ -404,7 +404,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 			log.Error(err, "Failed to create toxic")
 			return err
 		}
-		log.Info("toxic(name) added on port .... with this upstream")
+		log.Info("Toxic" + networkChaos.GetName() + "added on proxy" + proxy.Name)
 	}
 	// Disable the proxy if NetworkChaosSpec.Enable is false
 	if !networkChaos.Spec.Enabled {
@@ -422,12 +422,8 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req c
 	log := log.FromContext(ctx)
 
 	// Initialize Toxiproxy client
-	//toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + networkChaos.GetName() + "." + req.Namespace + ".svc.cluster.local:8474")
 	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + req.Namespace + "." + req.Namespace + ".svc.cluster.local:8474")
 
-	// // Determine the proxy name related to the CRD instance
-	// // This depends on how you associate your CRD instances with Toxiproxy proxies
-	// For example, it could be something like this:
 	proxyName := networkChaos.GetName()
 
 	// Delete the proxy
@@ -442,8 +438,8 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req c
 		log.Error(err, "Failed to delete Toxiproxy proxy")
 		return err
 	}
-	// Delete the svc
 
+	// Delete the svc
 	svcName := "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name
 	svc := &corev1.Service{}
 
