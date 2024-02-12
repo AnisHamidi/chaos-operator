@@ -280,7 +280,6 @@ func (r *NetworkChaosReconciler) manageToxiproxyProxies(ctx context.Context, req
 	toxiproxyClient := toxiproxy.NewClient("toxiproxy-" + req.Namespace + "." + req.Namespace + ".svc.cluster.local:8474")
 
 	// Attempt to retrieve an existing proxy
-	// Todo
 	proxy, err := r.getOrCreateProxy(ctx, req, toxiproxyClient, networkChaos)
 	if err != nil {
 		return err
@@ -302,29 +301,24 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 	proxy, err := toxiproxyClient.Proxy(networkChaos.GetName())
 	listen := ""
 
-	// Todo
 	if err != nil {
 		// if strings.Contains(err.Error(), "not found") {
 		// Proxy does not exist, create a new one
-		// TODO
-		// a service validation should be done on upstream name ******
-		//ghabl az create bia check kon aya service sakhte shode ya ma
 		svc := &corev1.Service{}
 		if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
 			if errors.IsNotFound(err) {
 				// Handle the case where the service does not exist
-				log.Info("Service does not exist")
+				log.Error(err, "Service does not exist")
 			}
 		} else {
 			// Service exists, extract the port
 			if len(svc.Spec.Ports) > 0 {
 				listen = "0.0.0.0:" + strconv.Itoa(int(svc.Spec.Ports[0].Port))
 			} else {
-				log.Info("Service does not expose any ports")
+				log.Error(err, "Service does not expose any ports")
 			}
 		}
 		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), listen, networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
-		//todo check if exists dont
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
 			return proxy, err
