@@ -20,6 +20,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -33,6 +34,7 @@ import (
 
 // log is for logging in this package.
 var networkchaoslog = logf.Log.WithName("networkchaos-resource")
+var runtimeClient client.Client
 
 func (r *NetworkChaos) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	runtimeClient = mgr.GetClient()
@@ -56,29 +58,31 @@ func (r *NetworkChaos) Default() {
 //+kubebuilder:webhook:path=/validate-chaos-snappcloud-io-v1alpha1-networkchaos,mutating=false,failurePolicy=fail,sideEffects=None,groups=chaos.snappcloud.io,resources=networkchaos,verbs=create;update,versions=v1alpha1,name=vnetworkchaos.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &NetworkChaos{}
-var runtimeClient client.Client
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *NetworkChaos) ValidateCreate() (admission.Warnings, error) {
 	ctx := context.Background()
-	// Construct the namespaced name for the service
 	svcNamespacedName := types.NamespacedName{
 		Name: r.Spec.Upstream.Name,
 		// Assuming the service is in the same namespace as the NetworkChaos object
-		// If not, you'll need to adjust this accordingly
 		Namespace: r.Namespace,
 	}
-	// Attempt to fetch the specified service
-	logf.Log.Info("its a test ")
 	svc := &v1.Service{}
 	if err := runtimeClient.Get(ctx, svcNamespacedName, svc); err != nil {
-		// If the service is not found, return an error to block the creation of the NetworkChaos object
 		return nil, fmt.Errorf("failed to find the specified upstream service (%s) in namespace (%s): %v", r.Spec.Upstream.Name, r.Namespace, err)
 	}
-	// If the service is found, you can perform additional checks here, such as validating the port
-
-	// If all validations pass, allow the creation of the NetworkChaos object
-
+	// Check if the specified port is present in the Service
+	upstreamPort, _ := strconv.ParseInt(r.Spec.Upstream.Port, 10, 32)
+	portFound := false
+	for _, p := range svc.Spec.Ports {
+		if int32(upstreamPort) == p.Port {
+			portFound = true
+			break
+		}
+	}
+	if !portFound {
+		return nil, fmt.Errorf("specified port %s not found in upstream service %s", r.Spec.Upstream.Port, r.Spec.Upstream.Name)
+	}
 	return nil, nil
 }
 
