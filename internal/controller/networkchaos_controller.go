@@ -302,8 +302,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 	listen := ""
 
 	if err != nil {
-		// if strings.Contains(err.Error(), "not found") {
-		// Proxy does not exist, create a new one
+		//before creating proxy check if svc exists, get the svc' port to create proxy with this port
 		svc := &corev1.Service{}
 		if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
 			if errors.IsNotFound(err) {
@@ -318,16 +317,14 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 				log.Error(err, "Service does not expose any ports")
 			}
 		}
+		// if Proxy does not exist, create a new one
 		proxy, err = toxiproxyClient.CreateProxy(networkChaos.GetName(), listen, networkChaos.Spec.Upstream.Name+":"+networkChaos.Spec.Upstream.Port)
 		if err != nil {
 			log.Error(err, "Failed to create proxy")
 			return proxy, err
 		}
 		log.Info("proxy for service " + networkChaos.Spec.Upstream.Name + "created successfully in namespace " + req.Namespace)
-		// } else {
-		// 	log.Error(err, "Failed to get proxy")
-		// 	return proxy, err
-		// }
+
 	}
 	return proxy, nil
 }
@@ -386,7 +383,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 			log.Error(err, "Failed to update toxic")
 			return err
 		}
-		log.Info("Toxic" + networkChaos.GetName() + "updated on proxy" + proxy.Name)
+		log.Info("Toxic " + networkChaos.GetName() + " updated on proxy" + proxy.Name)
 	} else {
 		// Add the toxic if it doesn't exist
 		_, err = proxy.AddToxic(networkChaos.GetName(), "latency", networkChaos.Spec.Stream, networkChaos.Spec.LatencyToxic.Probability, toxiproxy.Attributes{
@@ -398,7 +395,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 			log.Error(err, "Failed to create toxic")
 			return err
 		}
-		log.Info("Toxic" + networkChaos.GetName() + "added on proxy" + proxy.Name)
+		log.Info("Toxic " + networkChaos.GetName() + " added on proxy" + proxy.Name)
 	}
 	// Disable the proxy if NetworkChaosSpec.Enable is false
 	if !networkChaos.Spec.Enabled {

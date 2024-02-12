@@ -17,10 +17,15 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
 	"errors"
+	"fmt"
 
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -50,10 +55,28 @@ func (r *NetworkChaos) Default() {
 //+kubebuilder:webhook:path=/validate-chaos-snappcloud-io-v1alpha1-networkchaos,mutating=false,failurePolicy=fail,sideEffects=None,groups=chaos.snappcloud.io,resources=networkchaos,verbs=create;update,versions=v1alpha1,name=vnetworkchaos.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &NetworkChaos{}
+var runtimeClient client.Client
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *NetworkChaos) ValidateCreate() (admission.Warnings, error) {
-	// TODO(user): fill in your validation logic upon object creation.
+	ctx := context.Background()
+	// Construct the namespaced name for the service
+	svcNamespacedName := types.NamespacedName{
+		Name: r.Spec.Upstream.Name,
+		// Assuming the service is in the same namespace as the NetworkChaos object
+		// If not, you'll need to adjust this accordingly
+		Namespace: r.Namespace,
+	}
+	// Attempt to fetch the specified service
+	svc := &v1.Service{}
+	if err := runtimeClient.Get(ctx, svcNamespacedName, svc); err != nil {
+		// If the service is not found, return an error to block the creation of the NetworkChaos object
+		return nil, fmt.Errorf("failed to find the specified upstream service (%s) in namespace (%s): %v", r.Spec.Upstream.Name, r.Namespace, err)
+	}
+	// If the service is found, you can perform additional checks here, such as validating the port
+
+	// If all validations pass, allow the creation of the NetworkChaos object
+
 	return nil, nil
 }
 
