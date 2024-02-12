@@ -88,7 +88,7 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 	}
 	// Check if the networkChaos instance is marked to be deleted
 	if networkChaos.GetDeletionTimestamp() != nil {
-		if err := r.checkNetworkChaosInstanceMarkedDeleted(ctx, req, networkChaos); err != nil {
+		if err := r.checkNetworkChaosInstanceMarkedDeleted(ctx, req, networkChaos); err == nil {
 			return ctrl.Result{}, err
 		}
 	}
