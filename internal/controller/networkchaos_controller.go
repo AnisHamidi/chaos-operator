@@ -304,13 +304,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 	if err != nil {
 		//before creating proxy check if svc exists, get the svc' port to create proxy with this port
 		svc := &corev1.Service{}
-		if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
-			if errors.IsNotFound(err) {
-				// Handle the case where the service does not exist
-				log.Error(err, "Service does not exist")
-			}
-		} else {
-			// Service exists, extract the port
+		if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err == nil {
 			if len(svc.Spec.Ports) > 0 {
 				listen = "0.0.0.0:" + strconv.Itoa(int(svc.Spec.Ports[0].Port))
 			} else {
