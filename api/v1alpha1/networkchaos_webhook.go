@@ -35,6 +35,7 @@ import (
 var networkchaoslog = logf.Log.WithName("networkchaos-resource")
 
 func (r *NetworkChaos) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	runtimeClient = mgr.GetClient()
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
 		Complete()
