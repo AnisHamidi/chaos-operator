@@ -53,15 +53,12 @@ var _ webhook.Validator = &NetworkChaos{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
 func (r *NetworkChaos) ValidateCreate() (admission.Warnings, error) {
-	networkchaoslog.Info("validate create", "name", r.Name)
-
 	// TODO(user): fill in your validation logic upon object creation.
 	return nil, nil
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
 func (r *NetworkChaos) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	networkchaoslog.Info("validate update", "name", r.Name)
 	oldNetworkChaos, _ := old.(*NetworkChaos)
 
 	if r.Spec.Stream != oldNetworkChaos.Spec.Stream {
@@ -70,15 +67,11 @@ func (r *NetworkChaos) ValidateUpdate(old runtime.Object) (admission.Warnings, e
 	if r.Spec.Upstream != oldNetworkChaos.Spec.Upstream {
 		return nil, errors.New("modification of Upstream field is not allowed")
 	}
-
-	// TODO(user): fill in your validation logic upon object update.
 	return nil, nil
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *NetworkChaos) ValidateDelete() (admission.Warnings, error) {
-	networkchaoslog.Info("validate delete", "name", r.Name)
-
 	// TODO(user): fill in your validation logic upon object deletion.
 	return nil, nil
 }
