@@ -189,25 +189,25 @@ func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *NetworkChaosReconciler) checkNetworkChaosInstanceMarkedDeleted(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
+// func (r *NetworkChaosReconciler) checkNetworkChaosInstanceMarkedDeleted(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
 
-	if contains(networkChaos.GetFinalizers(), chaosFinalizer) {
-		// If the finalization logic fails, don't remove the finalizer so
-		// that we can retry during the next reconciliation
-		if err := r.finalizeNetworkChaos(ctx, req, networkChaos); err != nil {
-			return err
-		}
+// 	if contains(networkChaos.GetFinalizers(), chaosFinalizer) {
+// 		// If the finalization logic fails, don't remove the finalizer so
+// 		// that we can retry during the next reconciliation
+// 		if err := r.finalizeNetworkChaos(ctx, req, networkChaos); err != nil {
+// 			return err
+// 		}
 
-		// Remove Finalizer
-		networkChaos.SetFinalizers(remove(networkChaos.GetFinalizers(), chaosFinalizer))
-		if err := r.Update(ctx, networkChaos); err != nil {
-			return err
-		}
-	}
-	// Stop reconciliation as the item is being deleted
-	return nil
+// 		// Remove Finalizer
+// 		networkChaos.SetFinalizers(remove(networkChaos.GetFinalizers(), chaosFinalizer))
+// 		if err := r.Update(ctx, networkChaos); err != nil {
+// 			return err
+// 		}
+// 	}
+// 	// Stop reconciliation as the item is being deleted
+// 	return nil
 
-}
+// }
 
 func (r *NetworkChaosReconciler) ensureToxiproxyDeployment(ctx context.Context, req ctrl.Request, networkChaos *chaosv1alpha1.NetworkChaos) error {
 	log := log.FromContext(ctx)
@@ -464,35 +464,36 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req c
 	return nil
 
 }
-func (r *NetworkChaosReconciler) addFinalizer(ctx context.Context, networkChaos *chaosv1alpha1.NetworkChaos) error {
-	log := log.FromContext(ctx)
 
-	log.Info("Adding Finalizer for the NetworkChaos")
-	networkChaos.SetFinalizers(append(networkChaos.GetFinalizers(), chaosFinalizer))
+// func (r *NetworkChaosReconciler) addFinalizer(ctx context.Context, networkChaos *chaosv1alpha1.NetworkChaos) error {
+// 	log := log.FromContext(ctx)
 
-	// Update CR
-	if err := r.Update(context.Background(), networkChaos); err != nil {
-		log.Error(err, "Failed to update NetworkChaos with finalizer")
-		return err
-	}
-	return nil
-}
+// 	log.Info("Adding Finalizer for the NetworkChaos")
+// 	networkChaos.SetFinalizers(append(networkChaos.GetFinalizers(), chaosFinalizer))
 
-func contains(list []string, s string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
-}
+// 	// Update CR
+// 	if err := r.Update(context.Background(), networkChaos); err != nil {
+// 		log.Error(err, "Failed to update NetworkChaos with finalizer")
+// 		return err
+// 	}
+// 	return nil
+// }
 
-func remove(list []string, s string) []string {
-	newList := []string{}
-	for _, v := range list {
-		if v != s {
-			newList = append(newList, v)
-		}
-	}
-	return newList
-}
+// func contains(list []string, s string) bool {
+// 	for _, v := range list {
+// 		if v == s {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
+
+// func remove(list []string, s string) []string {
+// 	newList := []string{}
+// 	for _, v := range list {
+// 		if v != s {
+// 			newList = append(newList, v)
+// 		}
+// 	}
+// 	return newList
+// }
