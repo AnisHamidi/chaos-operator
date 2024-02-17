@@ -18,7 +18,6 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -319,7 +318,7 @@ func (r *NetworkChaosReconciler) getOrCreateProxy(ctx context.Context, req ctrl.
 			log.Error(err, "Failed to create proxy")
 			return proxy, err
 		}
-		log.Info("proxy for service " + networkChaos.Spec.Upstream.Name + "created successfully in namespace " + req.Namespace)
+		log.Info("proxy for service " + networkChaos.Spec.Upstream.Name + " created successfully in namespace " + req.Namespace)
 
 	}
 	return proxy, nil
@@ -344,11 +343,7 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 				log.Error(err, "Failed to create Service for proxy")
 				return err
 			}
-			log.Info("Service created successfully")
-			fmt.Printf("Before: %+v\n", svc)
-
-			log.Info("Owner refrence added")
-
+			log.Info("Service created successfully and Owner refrence added")
 		} else {
 			// Error other than NotFound
 			log.Error(err, "Failed to get Service")
