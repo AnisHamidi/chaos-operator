@@ -87,18 +87,49 @@ func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request
 		log.Error(err, "Failed to get NetworkChaos")
 		return ctrl.Result{}, err
 	}
+
+	if networkChaos.ObjectMeta.DeletionTimestamp.IsZero() {
+		// The object is not being deleted, so if it does not have our finalizer,
+		// then lets add the finalizer and update the object. This is equivalent
+		// to registering our finalizer.
+		if !controllerutil.ContainsFinalizer(networkChaos, chaosFinalizer) {
+			controllerutil.AddFinalizer(networkChaos, chaosFinalizer)
+			if err := r.Update(ctx, networkChaos); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+	} else {
+		// The object is being deleted
+		if controllerutil.ContainsFinalizer(networkChaos, chaosFinalizer) {
+			// our finalizer is present, so lets handle any external dependency
+			if err := r.finalizeNetworkChaos(ctx, req, networkChaos); err != nil {
+				// if fail to delete the external dependency here, return with error
+				// so that it can be retried.
+				return ctrl.Result{}, err
+			}
+
+			// remove our finalizer from the list and update it.
+			controllerutil.RemoveFinalizer(networkChaos, chaosFinalizer)
+			if err := r.Update(ctx, networkChaos); err != nil {
+				return ctrl.Result{}, err
+			}
+		}
+
+		// Stop reconciliation as the item is being deleted
+		return ctrl.Result{}, nil
+	}
 	// Check if the networkChaos instance is marked to be deleted
-	if networkChaos.GetDeletionTimestamp() != nil {
-		if err := r.checkNetworkChaosInstanceMarkedDeleted(ctx, req, networkChaos); err == nil {
-			return ctrl.Result{}, err
-		}
-	}
-	// Add finalizer for this CR
-	if !contains(networkChaos.GetFinalizers(), chaosFinalizer) {
-		if err := r.addFinalizer(ctx, networkChaos); err != nil {
-			return ctrl.Result{}, err
-		}
-	}
+	// if networkChaos.GetDeletionTimestamp() != nil {
+	// 	if err := r.checkNetworkChaosInstanceMarkedDeleted(ctx, req, networkChaos); err == nil {
+	// 		return ctrl.Result{}, err
+	// 	}
+	// }
+	// // Add finalizer for this CR
+	// if !contains(networkChaos.GetFinalizers(), chaosFinalizer) {
+	// 	if err := r.addFinalizer(ctx, networkChaos); err != nil {
+	// 		return ctrl.Result{}, err
+	// 	}
+	// }
 	// Ensure toxiproxy Deployment is created
 	if err := r.ensureToxiproxyDeployment(ctx, req, networkChaos); err != nil {
 		return ctrl.Result{}, err
