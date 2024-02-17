@@ -23,6 +23,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -333,12 +334,19 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 	svc := &corev1.Service{}
 	if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
 		if errors.IsNotFound(err) {
-			ser := r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy", port, port)
-			if err = r.Client.Create(ctx, ser); err != nil {
+			svc = r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy", port, port)
+			if err = r.Client.Create(ctx, svc); err != nil {
 				log.Error(err, "Failed to create Service for proxy")
 				return err
 			}
 			log.Info("Service created successfully")
+
+			if err := controllerutil.SetControllerReference(networkChaos, svc, r.Scheme); err != nil {
+				log.Error(err, "Failed to add owner refrence")
+				return err
+			}
+			log.Info("Owner refrence added")
+
 		} else {
 			// Error other than NotFound
 			log.Error(err, "Failed to get Service")
@@ -421,23 +429,6 @@ func (r *NetworkChaosReconciler) finalizeNetworkChaos(ctx context.Context, req c
 	err = proxy.Delete()
 	if err != nil {
 		log.Error(err, "Failed to delete Toxiproxy proxy")
-		return err
-	}
-
-	// Delete the svc
-	svcName := "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name
-	svc := &corev1.Service{}
-
-	// Try to get the Service if it exists
-	err = r.Client.Get(ctx, types.NamespacedName{Name: svcName, Namespace: req.Namespace}, svc)
-	if err != nil {
-		log.Error(err, "Failed to get proxy svc")
-		return err
-
-	}
-	// Delete the service
-	if err := r.Client.Delete(ctx, svc); err != nil {
-		log.Error(err, "Failed to delete proxy svc")
 		return err
 	}
 	log.Info("Successfully finalized and deleted Toxiproxy proxy")
