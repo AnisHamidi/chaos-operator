@@ -154,6 +154,7 @@ func (r *NetworkChaosReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			handler.EnqueueRequestsFromMapFunc(mapFunc),
 			builder.WithPredicates(labelPredicate),
 		).
+		Owns(&corev1.Service{}).
 		Complete(r)
 }
 
@@ -382,7 +383,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 			log.Error(err, "Failed to update toxic")
 			return err
 		}
-		log.Info("Toxic " + networkChaos.GetName() + " updated on proxy" + proxy.Name)
+		log.Info("Toxic " + networkChaos.GetName() + " updated on " + proxy.Name + " proxy ")
 	} else {
 		// Add the toxic if it doesn't exist
 		_, err = proxy.AddToxic(networkChaos.GetName(), "latency", networkChaos.Spec.Stream, networkChaos.Spec.LatencyToxic.Probability, toxiproxy.Attributes{
@@ -394,7 +395,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 			log.Error(err, "Failed to create toxic")
 			return err
 		}
-		log.Info("Toxic " + networkChaos.GetName() + " added on proxy" + proxy.Name)
+		log.Info("Toxic " + networkChaos.GetName() + " added on " + proxy.Name + " proxy ")
 	}
 	// Disable the proxy if NetworkChaosSpec.Enable is false
 	if !networkChaos.Spec.Enabled {
