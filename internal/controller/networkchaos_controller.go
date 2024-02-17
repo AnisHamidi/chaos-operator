@@ -336,6 +336,10 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 	if err = r.Client.Get(ctx, types.NamespacedName{Name: "toxiproxy-" + networkChaos.GetName() + "-" + networkChaos.Spec.Upstream.Name, Namespace: req.Namespace}, svc); err != nil {
 		if errors.IsNotFound(err) {
 			svc = r.createToxiproxyService(req.Namespace, "toxiproxy-"+networkChaos.GetName()+"-"+networkChaos.Spec.Upstream.Name, "toxiproxy", port, port)
+			if err = controllerutil.SetControllerReference(networkChaos, svc, r.Scheme); err != nil {
+				log.Error(err, "Failed to add owner refrence")
+				return err
+			}
 			if err = r.Client.Create(ctx, svc); err != nil {
 				log.Error(err, "Failed to create Service for proxy")
 				return err
@@ -343,10 +347,6 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 			log.Info("Service created successfully")
 			fmt.Printf("Before: %+v\n", svc)
 
-			if err = controllerutil.SetControllerReference(networkChaos, svc, r.Scheme); err != nil {
-				log.Error(err, "Failed to add owner refrence")
-				return err
-			}
 			log.Info("Owner refrence added")
 
 		} else {
