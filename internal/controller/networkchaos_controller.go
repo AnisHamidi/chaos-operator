@@ -18,6 +18,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -340,8 +341,9 @@ func (r *NetworkChaosReconciler) ensureToxiproxyServiceForProxy(ctx context.Cont
 				return err
 			}
 			log.Info("Service created successfully")
+			fmt.Printf("Before: %+v\n", svc)
 
-			if err := controllerutil.SetControllerReference(networkChaos, svc, r.Scheme); err != nil {
+			if err = controllerutil.SetControllerReference(networkChaos, svc, r.Scheme); err != nil {
 				log.Error(err, "Failed to add owner refrence")
 				return err
 			}
