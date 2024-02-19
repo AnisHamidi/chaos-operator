@@ -400,9 +400,9 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	log.Info("Toxic " + networkChaos.GetName() + " added on " + proxy.Name + " proxy ")
 	//	}
 	// if networkChaos.Spec.TimeoutToxic.Timeout > 0 {
-	_, err = proxy.AddToxic("test-timeout", "timeout", networkChaos.Spec.Stream, networkChaos.Spec.TimeoutToxic.Probability, toxiproxy.Attributes{
+	_, err = proxy.AddToxic("test-timeout", "timeout", networkChaos.Spec.Stream, 1, toxiproxy.Attributes{
 		"timeout":  networkChaos.Spec.TimeoutToxic.Timeout,
-		"toxicity": networkChaos.Spec.TimeoutToxic.Probability,
+		"toxicity": 1,
 	})
 	if err != nil {
 		log.Error(err, "Failed to create timeout toxic")
