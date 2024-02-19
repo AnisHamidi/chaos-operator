@@ -389,9 +389,8 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	//if networkChaos.Spec.LatencyToxic.Latency > 0 {
 
 	_, err = proxy.AddToxic(networkChaos.GetName()+"-latency", "latency", networkChaos.Spec.Stream, networkChaos.Spec.LatencyToxic.Probability, toxiproxy.Attributes{
-		"latency":  networkChaos.Spec.LatencyToxic.Latency,
-		"jitter":   networkChaos.Spec.LatencyToxic.Jitter,
-		"toxicity": networkChaos.Spec.LatencyToxic.Probability,
+		"latency": networkChaos.Spec.LatencyToxic.Latency,
+		"jitter":  networkChaos.Spec.LatencyToxic.Jitter,
 	})
 	if err != nil {
 		log.Error(err, "Failed to create latency toxic")
@@ -401,11 +400,11 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	//	}
 	// if networkChaos.Spec.TimeoutToxic.Timeout > 0 {
 	_, err = proxy.AddToxic(networkChaos.GetName()+"-timeout", "timeout", networkChaos.Spec.Stream, networkChaos.Spec.TimeoutToxic.Probability, toxiproxy.Attributes{
-		"timeout":  networkChaos.Spec.TimeoutToxic.Timeout,
-		"toxicity": networkChaos.Spec.TimeoutToxic.Probability,
+		"timeout": networkChaos.Spec.TimeoutToxic.Timeout,
 	})
-	log.Info("****its a test to print timeout valute", networkChaos.Spec.TimeoutToxic.Timeout)
-	log.Info("****its a test to print timeout valute", networkChaos.Spec.TimeoutToxic.Probability)
+	log.Info("****its a test to print timeout valute" + strconv.Itoa(networkChaos.Spec.TimeoutToxic.Timeout))
+
+	log.Info("****its a test to print timeout valute", strconv.Itoa(int(networkChaos.Spec.TimeoutToxic.Probability)))
 
 	if err != nil {
 		log.Error(err, "Failed to create timeout toxic")
