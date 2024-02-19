@@ -76,6 +76,7 @@ const (
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
 func (r *NetworkChaosReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := log.FromContext(ctx)
+	log.Info("***************************************omadam to reconcile")
 
 	// Fetch NetworkChaos object
 	networkChaos := &chaosv1alpha1.NetworkChaos{}
