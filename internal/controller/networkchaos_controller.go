@@ -401,7 +401,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 	//	}
 	// if networkChaos.Spec.TimeoutToxic.Timeout > 0 {
 	_, err = proxy.AddToxic("test-timeout", "timeout", networkChaos.Spec.Stream, 1, toxiproxy.Attributes{
-		"timeout":  networkChaos.Spec.TimeoutToxic.Timeout,
+		"timeout":  1000,
 		"toxicity": 1,
 	})
 	if err != nil {
