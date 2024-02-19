@@ -373,10 +373,6 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 			latencyExists = true
 			break
 		}
-		if toxic.Name == networkChaos.GetName()+"-timeout" {
-			timeoutExists = true
-			break
-		}
 	}
 
 	// Update the toxic if it exists
@@ -404,6 +400,12 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 				return err
 			}
 			log.Info("Latency toxic " + networkChaos.GetName() + " added on " + proxy.Name + " proxy ")
+		}
+	}
+	for _, toxic := range toxics {
+		if toxic.Name == networkChaos.GetName()+"-timeout" {
+			timeoutExists = true
+			break
 		}
 	}
 	// Update the toxic if it exists
