@@ -404,6 +404,9 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 		"timeout":  networkChaos.Spec.TimeoutToxic.Timeout,
 		"toxicity": networkChaos.Spec.TimeoutToxic.Probability,
 	})
+	log.Info("****its a test to print timeout valute", networkChaos.Spec.TimeoutToxic.Timeout)
+	log.Info("****its a test to print timeout valute", networkChaos.Spec.TimeoutToxic.Probability)
+
 	if err != nil {
 		log.Error(err, "Failed to create timeout toxic")
 		return err
