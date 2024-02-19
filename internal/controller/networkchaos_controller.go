@@ -396,7 +396,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 		log.Error(err, "Failed to create latency toxic")
 		return err
 	}
-	log.Info("Toxic " + networkChaos.GetName() + " added on " + proxy.Name + " proxy ")
+	log.Info("Latency toxic " + networkChaos.GetName() + " added on " + proxy.Name + " proxy ")
 	//	}
 	// if networkChaos.Spec.TimeoutToxic.Timeout > 0 {
 	_, err = proxy.AddToxic(networkChaos.GetName()+"-timeout", "timeout", networkChaos.Spec.Stream, networkChaos.Spec.TimeoutToxic.Probability, toxiproxy.Attributes{
@@ -418,6 +418,7 @@ func (r *NetworkChaosReconciler) manageToxics(ctx context.Context, req ctrl.Requ
 		log.Info("Proxy Updated and disabled")
 		return nil
 	}
+	log.Info("the end of function")
 	return nil
 }
 
